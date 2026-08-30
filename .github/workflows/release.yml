@@ -17,7 +17,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dart-lang/setup-dart@v1
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
 
       - name: Work out the version
         id: version
@@ -35,7 +38,9 @@ jobs:
           }
           "version=$tag" >> $env:GITHUB_OUTPUT
 
-      - run: dart pub get
+      # `flutter pub`, not `dart pub`: sherpa-onnx publishes its Dart FFI
+      # bindings as a Flutter plugin. Nothing Flutter reaches the binary.
+      - run: flutter pub get
       - run: dart analyze --fatal-infos
       - run: dart test
 

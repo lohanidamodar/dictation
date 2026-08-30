@@ -1,1 +1,13 @@
 include: package:lints/recommended.yaml
+
+analyzer:
+  exclude:
+    # build/ holds the staged release; the rest are the platform folders
+    # `flutter pub get` insists on listing, and which this repo does not have.
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**

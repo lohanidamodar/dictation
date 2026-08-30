@@ -2,7 +2,8 @@
 ///
 /// Windows only: it records through `waveIn`, types through `SendInput`, and
 /// puts its tray icon and status pill up through ordinary Win32 windows — all
-/// from pure Dart over FFI. No Flutter, no plugins.
+/// from Dart over FFI. The compiled program contains no Flutter, though
+/// resolving sherpa-onnx's bindings needs the Flutter SDK's pub.
 library;
 
 // The model catalog and store are part of this app's surface: [Recogniser]

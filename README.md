@@ -4,9 +4,15 @@ Hold a hotkey, speak, let go — the words are typed into whatever window has
 focus. A text box, a terminal, a chat message, someone else's app. Recognition
 runs on your machine; no audio leaves it, and it works with the network off.
 
-Windows only, and pure Dart: it records through `waveIn`, types through
-`SendInput`, and puts its tray icon and status pill up through ordinary Win32
-windows over FFI. No Flutter, no plugins, no Python.
+Windows only, and no Flutter in the finished program: it records through
+`waveIn`, types through `SendInput`, and puts its tray icon and status pill up
+through ordinary Win32 windows over FFI. The compiled `dictate.exe` is a plain
+Win32 binary — no engine, no widgets, no plugins, no Python.
+
+Building it does need the Flutter SDK, for one reason: sherpa-onnx publishes its
+Dart FFI bindings as a Flutter plugin, so `flutter pub get` is what resolves
+them. The bindings themselves are plain `dart:ffi` and nothing Flutter ends up
+in the executable.
 
 ```
 Ctrl+Alt+D  →  🎤  →  the words appear where your cursor is
@@ -35,7 +41,7 @@ Hold **Ctrl+Alt+D**, speak, let go.
 ### Building it yourself
 
 ```
-dart pub get
+flutter pub get                   # see above: sherpa-onnx ships as a plugin
 dart run tool/make_icon.dart      # draws installer/dictation.ico
 dart run tool/package.dart        # build/dictation-<version>-windows-x64{,.zip}
 iscc installer\dictation.iss /DVersion=<version>
