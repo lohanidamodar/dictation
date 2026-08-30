@@ -69,27 +69,29 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
+          # In the YAML rather than a PowerShell here-string: a here-string's
+          # terminator has to sit at column 0, which ends the block scalar and
+          # breaks the workflow file.
+          NOTES: |
+            ## Install
+
+            **dictation-${{ steps.version.outputs.version }}-windows-x64-setup.exe** — installs for the current user, so it needs no administrator. Or take the `.zip` and run `dictate.exe` from anywhere.
+
+            Hold **Ctrl+Alt+D**, speak, let go.
+
+            ## First run
+
+            It downloads a speech model, about 640 MB, and **shows you the licence before it does**. That download is shared with any other PopupBits app on this machine. Afterwards nothing leaves your computer — recognition is local and works offline.
+
+            ## Licences
+
+            The program is MIT. The models are not, and one of them is not open source at all. See `THIRD-PARTY-NOTICES.md` in the download.
+
+            Windows x64 only. Verify with `SHA256SUMS.txt`.
         run: |
           $v = '${{ steps.version.outputs.version }}'
-          $notes = @"
-## Install
-
-**[dictation-$v-windows-x64-setup.exe](https://github.com/${{ github.repository }}/releases/download/v$v/dictation-$v-windows-x64-setup.exe)** — installs for the current user, so it needs no administrator. Or take the ``.zip`` and run ``dictate.exe`` from anywhere.
-
-Hold **Ctrl+Alt+D**, speak, let go.
-
-## First run
-
-It downloads a speech model, about 640 MB, and **shows you the licence before it does**. That download is shared with any other PopupBits app on this machine. Afterwards nothing leaves your computer — recognition is local and works offline.
-
-## Licences
-
-The program is MIT. The models are not, and one of them is not open source at all. See ``THIRD-PARTY-NOTICES.md`` in the download.
-
-Windows x64 only. Verify with ``SHA256SUMS.txt``.
-"@
           gh release create "v$v" `
-            build/dictation-$v-windows-x64-setup.exe `
-            build/dictation-$v-windows-x64.zip `
+            "build/dictation-$v-windows-x64-setup.exe" `
+            "build/dictation-$v-windows-x64.zip" `
             build/SHA256SUMS.txt `
-            --title "dictation $v" --notes $notes
+            --title "dictation $v" --notes "$env:NOTES"
