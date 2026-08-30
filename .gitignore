@@ -1,0 +1,8 @@
+.dart_tool/
+build/
+*.exe
+
+# Resolved against the local working copy of voice_models when
+# pubspec_overrides.yaml is present, so it would be wrong for anyone else.
+pubspec.lock
+pubspec_overrides.yaml
