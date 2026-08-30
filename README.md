@@ -22,35 +22,34 @@ corrections list for the words it gets wrong about you specifically.
 
 ## Install
 
-1. **Get the app.** Either download a release, or build it:
+Take the **[latest release][releases]** — either the installer, which installs
+for the current user and so never asks for an administrator, or the zip, which
+runs from wherever you unpack it. Both carry the sherpa-onnx libraries; there is
+nothing else to fetch by hand.
 
-   ```
-   dart pub get
-   dart compile exe bin/dictate.dart -o dictate.exe
-   ```
-
-2. **Get the native libraries.** These are not models and cannot be fetched
-   automatically. From [sherpa-onnx releases][sherpa], download
-
-   ```
-   sherpa-onnx-v<version>-win-x64-shared-MT-MinSizeRel-no-tts-lib.tar.bz2
-   ```
-
-   and put `sherpa-onnx-c-api.dll` and `onnxruntime.dll` in **either** the
-   folder holding `dictate.exe`, **or** `%LOCALAPPDATA%\PopupBits\runtime`
-   (shared with other PopupBits apps). Both must be together — see
-   [Notes](#notes-from-the-build) for why.
-
-3. **Run it.**
-
-   ```
-   dictate.exe --console
-   ```
-
-   On the first run it prints the model's licence, asks, and downloads about
-   640 MB. After that it starts in a few seconds and sits in the tray.
+On the first run it shows you the model's licence, asks, and downloads about
+640 MB. The tray tooltip counts it down. After that it starts in a few seconds.
 
 Hold **Ctrl+Alt+D**, speak, let go.
+
+### Building it yourself
+
+```
+dart pub get
+dart run tool/make_icon.dart      # draws installer/dictation.ico
+dart run tool/package.dart        # build/dictation-<version>-windows-x64{,.zip}
+iscc installer\dictation.iss /DVersion=<version>
+```
+
+`tool/package.dart` downloads the matching sherpa-onnx libraries itself, so the
+zip and the installer are built from the same staged folder and cannot drift
+apart. `.github/workflows/release.yml` runs exactly this on a `v*` tag.
+
+To run it straight from source you need the two native libraries somewhere it
+looks — beside the executable, or in `%LOCALAPPDATA%\PopupBits\runtime`, which
+other PopupBits apps share. They come from [sherpa-onnx releases][sherpa], asset
+`sherpa-onnx-v<version>-win-x64-shared-MT-Release-no-tts-lib.tar.bz2`. Both must
+be together — see [Notes](#notes-from-the-build) for why.
 
 ## The models, and their licences
 
@@ -73,7 +72,8 @@ the table above and the catalog record.
 The [sherpa-onnx][sherpa] libraries themselves are Apache-2.0.
 
 If you redistribute a build with weights included, those obligations are yours,
-not this project's.
+not this project's. `THIRD-PARTY-NOTICES.md`, which ships in every download,
+lists everything a release redistributes and under what terms.
 
 ### Which recogniser
 
@@ -94,6 +94,7 @@ and its licence is the publisher's own. Switch with `"model":
 | native libraries | `%LOCALAPPDATA%\PopupBits\runtime`, or beside the exe |
 | settings | `%APPDATA%\Dictation\config.json` |
 | corrections | `%LOCALAPPDATA%\PopupBits\models\vocabulary.json` |
+| the program, if installed | `%LOCALAPPDATA%\Programs\Dictation` |
 
 The models directory is shared on purpose. These are hundreds of megabytes and
 identical between apps, so a dictation tool and a speech-to-speech assistant
@@ -190,6 +191,7 @@ that actually guards them.
 
 MIT — see [LICENSE](LICENSE). The models are not MIT; see the table above.
 
+[releases]: https://github.com/lohanidamodar/dictation/releases/latest
 [sherpa]: https://github.com/k2-fsa/sherpa-onnx/releases
 [parakeet]: https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3
 [sensevoice]: https://huggingface.co/FunAudioLLM/SenseVoiceSmall

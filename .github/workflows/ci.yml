@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    # Windows, because that is the only platform this builds for — the code
+    # calls waveIn and SendInput directly.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - run: dart pub get
+      - run: dart analyze --fatal-infos
+      - run: dart test
+
+      # The release build has to keep working, not just the library. Packaging
+      # is where a missing notices file or a moved sherpa release shows up.
+      - run: dart run tool/make_icon.dart
+      - run: dart run tool/package.dart

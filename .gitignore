@@ -2,6 +2,10 @@
 build/
 *.exe
 
+# Drawn by tool/make_icon.dart at build time, so there is one definition of
+# what the icon looks like rather than a binary that drifts from the code.
+installer/dictation.ico
+
 # Resolved against the local working copy of voice_models when
 # pubspec_overrides.yaml is present, so it would be wrong for anyone else.
 pubspec.lock

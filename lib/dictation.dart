@@ -13,6 +13,7 @@ export 'src/config.dart';
 export 'src/dictation.dart';
 export 'src/hotkey.dart' show Hotkey, parseHotkey;
 export 'src/microphone.dart';
+export 'src/prompt.dart';
 export 'src/stt/engine.dart';
 export 'src/stt/native_runtime.dart';
 export 'src/stt/recogniser.dart';

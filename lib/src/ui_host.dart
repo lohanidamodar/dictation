@@ -43,6 +43,7 @@ abstract final class _Command {
   static const overlay = WM_APP + 10;
   static const status = WM_APP + 11;
   static const quit = WM_APP + 12;
+  static const progress = WM_APP + 13;
 }
 
 /// The tray icon's own callback message.
@@ -171,6 +172,14 @@ class UiHost {
     _post(_Command.status, status.index, paused ? 1 : 0);
   }
 
+  /// How far a model download has got, 0..100.
+  ///
+  /// Shown in the tooltip. Started from a shortcut there is no console, so
+  /// without this a first run is several minutes of a tray icon that looks
+  /// exactly like a hung one.
+  void setProgress(int percent) =>
+      _post(_Command.progress, percent.clamp(0, 100), 0);
+
   bool get isPaused => _paused;
 
   Future<void> dispose() async {
@@ -212,6 +221,9 @@ Pointer<NOTIFYICONDATA>? _trayData;
 
 var _overlayState = UiOverlayState.hidden;
 var _status = UiStatus.loading;
+
+/// Download progress, 0..100, shown while [UiStatus.loading].
+var _progress = 0;
 var _paused = false;
 double _level = 0;
 var _hotkeyDown = false;
@@ -378,6 +390,11 @@ int _messageWindowProc(int hwnd, int message, int wParam, int lParam) {
       _applyStatus();
       return 0;
 
+    case _Command.progress:
+      _progress = wParam;
+      if (_status == UiStatus.loading) _applyStatus();
+      return 0;
+
     case _Command.quit:
       _running = false;
       // GetMessage returns 0 on WM_QUIT, which ends the loop.
@@ -507,12 +524,13 @@ void _removeTrayIcon() {
 }
 
 String get _statusText => switch (_status) {
-      UiStatus.loading => 'Loading models…',
+      UiStatus.loading =>
+        _progress > 0 ? 'Downloading model — $_progress%' : 'Starting…',
       UiStatus.ready => 'Ready — hold $_hotkeyLabel',
       UiStatus.listening => 'Listening',
       UiStatus.recognising => 'Recognising',
       UiStatus.paused => 'Paused',
-      UiStatus.failed => 'Error — see the console',
+      UiStatus.failed => 'Not working — see the message',
     };
 
 void _applyStatus() {

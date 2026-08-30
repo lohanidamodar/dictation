@@ -30,6 +30,8 @@ Future<void> main(List<String> argv) async {
     ..addFlag('help', abbr: 'h', negatable: false);
 
   final args = parser.parse(argv);
+  final hasConsole = args.flag('console');
+  final prompter = Prompter.forConsole(hasConsole: hasConsole);
   if (args.flag('help')) {
     stdout.writeln('Usage: dictate [options]\n${parser.usage}');
     return;
@@ -65,10 +67,17 @@ Future<void> main(List<String> argv) async {
   // it first, so a second copy would start, quietly fail to register, and sit
   // there looking exactly like a broken one.
   if (!_claimSingleInstance()) {
-    stderr.writeln('Dictation is already running — look for its tray icon.');
+    prompter.tell('Dictation is already running',
+        'Look for the microphone in the notification area. Right-click it to '
+        'quit, if you meant to start a fresh copy.');
     exitCode = 1;
     return;
   }
+
+  // Dart compiles to a console program, so double-clicking it leaves a black
+  // window sitting on the taskbar for as long as the app runs. Nothing here
+  // needs a console unless someone asked for the log, so let it go.
+  if (!hasConsole) FreeConsole();
 
   final configPath = args.option('config') ?? DictationConfig.defaultPath();
   final config = await DictationConfig.loadOrCreate(configPath);
@@ -78,8 +87,9 @@ Future<void> main(List<String> argv) async {
     configPath: configPath,
     store: store,
     nativeLibraryDir: args.option('native-lib') ?? config.nativeLibraryDir,
+    prompter: prompter,
     acceptLicences: args.flag('yes'),
-    verbose: args.flag('console'),
+    verbose: hasConsole,
     tracePath: args.option('trace'),
   );
 
@@ -113,6 +123,7 @@ class DictationApp {
     required this.config,
     required this.configPath,
     required this.store,
+    required this.prompter,
     this.nativeLibraryDir,
     this.acceptLicences = false,
     this.verbose = false,
@@ -122,6 +133,10 @@ class DictationApp {
   DictationConfig config;
   final String configPath;
   final ModelStore store;
+
+  /// How to ask the user something — a dialog, or the terminal.
+  final Prompter prompter;
+
   final String? nativeLibraryDir;
 
   /// Skip the licence prompt. Only ever set by `--yes`, never by default: a
@@ -168,7 +183,8 @@ class DictationApp {
     final nativeDir = resolveNativeLibraryDir(nativeLibraryDir);
     if (nativeDir == null) {
       _ui?.setStatus(UiStatus.failed);
-      stderr.writeln(missingNativeLibrariesMessage(nativeLibraryDir));
+      prompter.tell('Dictation cannot start',
+          missingNativeLibrariesMessage(nativeLibraryDir));
       _trace('load.no-native-libs');
       return;
     }
@@ -178,19 +194,19 @@ class DictationApp {
       _stt = await recogniser.open(
         model,
         onLicence: _confirmLicence,
-        onProgress: (p) {
-          if (verbose && (p.fraction * 100).round() % 10 == 0) {
-            stdout.writeln('  ${(p.fraction * 100).round()}%  ${p.file}');
-          }
-        },
+        onProgress: _onDownloadProgress,
       );
-    } on ModelDeclined catch (e) {
+    } on ModelDeclined {
       _ui?.setStatus(UiStatus.failed);
-      stderr.writeln('$e');
+      prompter.tell('${model.name} was not downloaded',
+          'Its licence was declined, so there is nothing to recognise speech '
+          'with. Choose Reload settings from the tray menu to be asked again.');
       return;
     } catch (e) {
       _ui?.setStatus(UiStatus.failed);
       _log('could not load ${model.name}: $e');
+      prompter.tell('Dictation cannot start',
+          'Could not load ${model.name}.\n\n$e');
       return;
     }
 
@@ -225,27 +241,45 @@ class DictationApp {
   /// Asks before downloading weights.
   ///
   /// The terms are the publisher's, not ours, and one of the models here is
-  /// not under an open-source licence at all. Printing the licence and waiting
-  /// is the least this can do.
+  /// not under an open-source licence at all. Showing the licence and waiting
+  /// for an answer is the least this can do.
   Future<bool> _confirmLicence(VoiceModel model) async {
     if (acceptLicences) return true;
 
-    stdout
-      ..writeln('\n${model.name} — ${model.sizeLabel}')
-      ..writeln('  licence: ${model.licence.name}')
-      ..writeln('  terms:   ${model.licence.url}')
-      ..writeln('  source:  ${model.source}');
+    final details = StringBuffer()
+      ..writeln('${model.name} — ${model.sizeLabel}')
+      ..writeln()
+      ..writeln('Licence: ${model.licence.name}')
+      ..writeln(model.licence.url)
+      ..writeln()
+      ..writeln('From: ${model.source}');
     if (model.licence.notes case final notes?) {
-      stdout.writeln('  note:    $notes');
+      details
+        ..writeln()
+        ..writeln(notes);
     }
     if (model.licence.attribution case final credit?) {
-      stdout.writeln('  credit:  $credit');
+      details
+        ..writeln()
+        ..writeln('Credit required: $credit');
     }
-    stdout.write('\nDownload it? [y/N] ');
 
-    final answer = stdin.readLineSync()?.trim().toLowerCase();
-    return answer == 'y' || answer == 'yes';
+    return prompter.confirm('Download a speech model?', '$details');
   }
+
+  /// Keeps the tray tooltip honest during a download of several hundred
+  /// megabytes, which is otherwise indistinguishable from a hung program.
+  void _onDownloadProgress(DownloadProgress progress) {
+    final percent = (progress.fraction * 100).round();
+    if (percent == _lastPercent) return;
+    _lastPercent = percent;
+    _ui?.setProgress(percent);
+    if (verbose && percent % 10 == 0) {
+      stdout.writeln('  $percent%  ${progress.file}');
+    }
+  }
+
+  int _lastPercent = -1;
 
   void _onUiEvent(UiEvent event) {
     switch (event) {

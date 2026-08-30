@@ -1,0 +1,20 @@
+Dictation is installed.
+
+FIRST RUN
+
+The first time it starts it downloads a speech model — about 640 MB — from
+NVIDIA's Hugging Face repository, and shows you the licence before it does.
+That download happens once and is shared with any other PopupBits app on this
+machine. Nothing is sent anywhere afterwards: recognition runs on your machine,
+and it works with the network off.
+
+HOW TO USE IT
+
+Hold Ctrl+Alt+D, speak, let go. The words are typed into whatever window has
+focus. Right-click the tray icon to pause it, change the hotkey, or quit.
+
+LICENCES
+
+The program is MIT. The speech models are not, and one of them is not open
+source at all — see THIRD-PARTY-NOTICES.md in the install folder before you
+build anything on top of this.
