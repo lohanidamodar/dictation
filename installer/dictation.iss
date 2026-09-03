@@ -60,6 +60,8 @@ Source: "dictation.ico"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Staged}\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Staged}\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Staged}\THIRD-PARTY-NOTICES.md"; DestDir: "{app}"; Flags: ignoreversion
+; Apache-2.0 asks that recipients be given a copy of the licence itself.
+Source: "{#Staged}\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion
 
 [Icons]
 ; Minimised, because the program is a console executable that frees its console

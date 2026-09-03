@@ -10,7 +10,14 @@ libraries below, whose licences require their notices to travel with them.
 | [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) (`sherpa-onnx-c-api.dll`) | [Apache-2.0](https://github.com/k2-fsa/sherpa-onnx/blob/master/LICENSE) | Xiaomi Corporation and the k2-fsa authors |
 | [ONNX Runtime](https://github.com/microsoft/onnxruntime) (`onnxruntime.dll`) | [MIT](https://github.com/microsoft/onnxruntime/blob/main/LICENSE) | Microsoft Corporation |
 
+The full text of each is in `licenses/` in the download, because Apache-2.0
+asks that recipients be given a copy of the licence and not merely its name.
+
 ## Compiled into `dictate.exe`
+
+Dart resolves **69 packages** for this program. All are permissive — 56
+BSD-3-Clause, 10 Apache-2.0, 3 MIT — with no copyleft and nothing
+non-commercial. The ones with their own names on them:
 
 | package | licence | copyright |
 |---|---|---|
