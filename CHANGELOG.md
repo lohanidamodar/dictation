@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- The icon was 364 KB of uncompressed bitmaps; as PNG above 64px it is 23 KB,
+  which takes the installer from 9.0 MB to 8.65.
+
 ## 0.1.1
 
 - The download now carries `licenses/` with the full text of sherpa-onnx's

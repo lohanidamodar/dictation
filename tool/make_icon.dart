@@ -105,10 +105,14 @@ bool _inMicrophone(double x, double y) {
 
 /// Packs the images into an .ico.
 ///
-/// Uncompressed 32-bit bitmaps: an .ico may hold PNGs instead, and would be
-/// smaller for the 256, but that needs a PNG encoder for one build artefact.
+/// The large sizes go in as PNG and the small ones as bitmaps. An .ico entry
+/// may be either; PNG takes the 256 from 256 KB to a few, and below 64 the
+/// header costs more than the compression saves.
 Uint8List _ico(List<(int, Uint8List)> images) {
-  final encoded = [for (final (size, pixels) in images) _dib(size, pixels)];
+  final encoded = [
+    for (final (size, pixels) in images)
+      size >= 64 ? _png(size, pixels) : _dib(size, pixels),
+  ];
 
   const dirEntry = 16;
   var offset = 6 + dirEntry * images.length;
@@ -137,6 +141,59 @@ Uint8List _ico(List<(int, Uint8List)> images) {
     file.add(image);
   }
   return file.toBytes();
+}
+
+/// A minimal PNG: one IHDR, one IDAT, one IEND.
+///
+/// Hand-rolled because the alternative is a package dependency for a build
+/// script that writes one file.
+Uint8List _png(int size, Uint8List bgra) {
+  final raw = BytesBuilder();
+  for (var y = 0; y < size; y++) {
+    raw.addByte(0); // filter: none
+    for (var x = 0; x < size; x++) {
+      final i = (y * size + x) * 4;
+      raw.add([bgra[i + 2], bgra[i + 1], bgra[i], bgra[i + 3]]);
+    }
+  }
+
+  Uint8List chunk(String type, List<int> data) {
+    final body = (BytesBuilder()
+          ..add(type.codeUnits)
+          ..add(data))
+        .toBytes();
+    return (BytesBuilder()
+          ..add(_u32be(data.length))
+          ..add(body)
+          ..add(_u32be(_crc32(body))))
+        .toBytes();
+  }
+
+  return (BytesBuilder()
+        ..add([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+        ..add(chunk('IHDR', [
+          ..._u32be(size), ..._u32be(size),
+          8, // bits per channel
+          6, // RGBA
+          0, 0, 0,
+        ]))
+        ..add(chunk('IDAT', ZLibCodec().encode(raw.toBytes())))
+        ..add(chunk('IEND', [])))
+      .toBytes();
+}
+
+Uint8List _u32be(int v) =>
+    Uint8List(4)..buffer.asByteData().setUint32(0, v, Endian.big);
+
+int _crc32(List<int> data) {
+  var crc = 0xFFFFFFFF;
+  for (final byte in data) {
+    crc ^= byte;
+    for (var i = 0; i < 8; i++) {
+      crc = (crc & 1) != 0 ? (crc >> 1) ^ 0xEDB88320 : crc >> 1;
+    }
+  }
+  return crc ^ 0xFFFFFFFF;
 }
 
 /// One image: a BITMAPINFOHEADER, the pixels bottom-up, then an AND mask.
