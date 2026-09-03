@@ -45,12 +45,17 @@ Future<void> main(List<String> argv) async {
 
   if (args.flag('list-models')) {
     stdout.writeln('models: ${store.root.path}\n');
-    for (final model in voiceModelCatalog) {
+    // Only what this app can load. The catalogue also holds voices, which
+    // belong to the speaking apps and would only be confusing here.
+    for (final model in Recogniser.supported) {
       stdout
         ..writeln('${store.has(model) ? "installed" : "         "}  '
-            '${model.id.padRight(28)} ${model.sizeLabel.padLeft(9)}')
-        ..writeln('            ${model.licence.summary}')
-        ..writeln('            ${model.licence.url}');
+            '${model.id.padRight(24)} ${model.sizeLabel.padLeft(9)}  '
+            '${model.languages.join(" ")}')
+        ..writeln('            ${model.licence.summary}');
+      if (model.notes case final notes?) {
+        stdout.writeln('            $notes');
+      }
     }
     store.dispose();
     return;

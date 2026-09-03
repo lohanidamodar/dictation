@@ -48,6 +48,12 @@ class Recogniser {
           tokens: '${path}tokens.txt',
           nativeLibraryPath: nativeLibraryDir,
         ),
+      // A Conformer-CTC, which decodes with a single network and no joiner.
+      'indicconformer-ne-int8' => SttConfig.nemoCtc(
+          model: '${path}model.int8.onnx',
+          tokens: '${path}tokens.txt',
+          nativeLibraryPath: nativeLibraryDir,
+        ),
       _ => throw ArgumentError(
           '${model.id} is in the catalog but this app does not know how to '
           'load it. Add a case here when adding a recogniser.',
@@ -60,9 +66,11 @@ class Recogniser {
   ///
   /// Parakeet first: it punctuates and capitalises as it decodes, which is
   /// most of what dictated text needs. SenseVoice is a third the size and
-  /// writes numbers as digits, which Parakeet does not.
+  /// writes numbers as digits, which Parakeet does not. IndicConformer is
+  /// here because it is the only one of the three that speaks Nepali.
   static List<VoiceModel> get supported => [
         modelById('parakeet-tdt-0.6b-v3-int8')!,
         modelById('sense-voice-small')!,
+        modelById('indicconformer-ne-int8')!,
       ];
 }
