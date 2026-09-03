@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1
+
+- The download now carries `licenses/` with the full text of sherpa-onnx's
+  Apache-2.0 and ONNX Runtime's MIT licence. Naming a licence is not the same
+  as providing it, and Apache-2.0 asks for the latter.
+- The notices account for all sixty-nine resolved packages rather than the
+  seven direct ones.
+
 ## 0.1.0
 
 First release.
