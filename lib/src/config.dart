@@ -39,6 +39,16 @@ class DictationConfig {
   /// Shorter than this counts as a slip of the finger, not speech.
   final double minimumSeconds;
 
+  DictationConfig copyWith({String? modelId}) => DictationConfig(
+        hotkey: hotkey,
+        modelId: modelId ?? this.modelId,
+        nativeLibraryDir: nativeLibraryDir,
+        vocabularyPath: vocabularyPath,
+        spokenPunctuation: spokenPunctuation,
+        showOverlay: showOverlay,
+        minimumSeconds: minimumSeconds,
+      );
+
   Map<String, dynamic> toJson() => {
         'hotkey': {
           'key': hotkey.label,

@@ -44,6 +44,7 @@ abstract final class _Command {
   static const status = WM_APP + 11;
   static const quit = WM_APP + 12;
   static const progress = WM_APP + 13;
+  static const language = WM_APP + 14;
 }
 
 /// The tray icon's own callback message.
@@ -56,6 +57,10 @@ abstract final class UiMenu {
   static const settings = 3;
   static const reload = 4;
   static const quit = 5;
+
+  /// Language entries start here, one per recogniser, so the ids stay clear of
+  /// the fixed items above however many languages there turn out to be.
+  static const firstLanguage = 100;
 }
 
 /// Something that happened on the UI thread.
@@ -110,6 +115,8 @@ class UiHost {
     required int hotkeyModifiers,
     required int hotkeyKey,
     required String hotkeyLabel,
+    List<String> languages = const [],
+    int selectedLanguage = 0,
   }) async {
     final fromUi = ReceivePort();
     final events = StreamController<UiEvent>.broadcast();
@@ -120,6 +127,8 @@ class UiHost {
       hotkeyModifiers,
       hotkeyKey,
       hotkeyLabel,
+      languages,
+      selectedLanguage,
     ]);
 
     fromUi.listen((Object? message) {
@@ -171,6 +180,9 @@ class UiHost {
     _paused = paused;
     _post(_Command.status, status.index, paused ? 1 : 0);
   }
+
+  /// Ticks the language the menu shows as current.
+  void setLanguage(int index) => _post(_Command.language, index, 0);
 
   /// How far a model download has got, 0..100.
   ///
@@ -224,6 +236,10 @@ var _status = UiStatus.loading;
 
 /// Download progress, 0..100, shown while [UiStatus.loading].
 var _progress = 0;
+
+/// The recognisers offered in the menu, and which one is ticked.
+var _languages = <String>[];
+var _selectedLanguage = 0;
 var _paused = false;
 double _level = 0;
 var _hotkeyDown = false;
@@ -239,6 +255,8 @@ void _uiIsolate(List<Object?> args) {
   final key = args[2]! as int;
   _currentHotkeyKey = key;
   _hotkeyLabel = args[3]! as String;
+  _languages = (args[4]! as List).cast<String>();
+  _selectedLanguage = args[5]! as int;
 
   final messageProc =
       NativeCallable<IntPtr Function(IntPtr, Uint32, IntPtr, IntPtr)>
@@ -393,6 +411,10 @@ int _messageWindowProc(int hwnd, int message, int wParam, int lParam) {
     case _Command.progress:
       _progress = wParam;
       if (_status == UiStatus.loading) _applyStatus();
+      return 0;
+
+    case _Command.language:
+      _selectedLanguage = wParam;
       return 0;
 
     case _Command.quit:
@@ -563,6 +585,26 @@ void _showMenu(int hwnd) {
   item(0, _statusText, enabled: false);
   AppendMenu(menu, MENU_ITEM_FLAGS(MF_SEPARATOR), 0, null);
   item(UiMenu.pause, _paused ? 'Resume' : 'Pause');
+
+  // Switching language is the one setting worth reaching without opening a
+  // file — someone working in two languages does it many times a day.
+  if (_languages.isNotEmpty) {
+    AppendMenu(menu, MENU_ITEM_FLAGS(MF_SEPARATOR), 0, null);
+    for (var i = 0; i < _languages.length; i++) {
+      final ptr = _languages[i].toNativeUtf16();
+      labels.add(ptr);
+      AppendMenu(
+        menu,
+        MENU_ITEM_FLAGS(
+          MF_STRING | (i == _selectedLanguage ? MF_CHECKED : MF_UNCHECKED),
+        ),
+        UiMenu.firstLanguage + i,
+        PCWSTR(ptr),
+      );
+    }
+    AppendMenu(menu, MENU_ITEM_FLAGS(MF_SEPARATOR), 0, null);
+  }
+
   item(UiMenu.settings, 'Edit settings…');
   item(UiMenu.reload, 'Reload settings');
   AppendMenu(menu, MENU_ITEM_FLAGS(MF_SEPARATOR), 0, null);

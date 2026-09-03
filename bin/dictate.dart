@@ -157,12 +157,41 @@ class DictationApp {
   bool _paused = false;
   final _quit = Completer<void>();
 
+  /// The recognisers offered in the tray, in catalogue order.
+  List<VoiceModel> get _choices => Recogniser.supported;
+
+  int get _chosenIndex {
+    final i = _choices.indexWhere((m) => m.id == config.modelId);
+    return i < 0 ? 0 : i;
+  }
+
+  /// "Nepali", "English", or the id when a model claims several languages.
+  String _label(VoiceModel model) {
+    const names = {
+      'ne': 'Nepali',
+      'en': 'English',
+      'zh': 'Chinese',
+      'ja': 'Japanese',
+      'ko': 'Korean',
+      'yue': 'Cantonese',
+    };
+    final spoken = model.languages.length == 1
+        ? names[model.languages.single] ?? model.languages.single
+        : model.languages.map((l) => names[l] ?? l).take(2).join('/');
+    // The size is the honest part of the offer for one not yet downloaded.
+    return store.has(model)
+        ? '$spoken — ${model.name}'
+        : '$spoken — ${model.name} (${model.sizeLabel} to download)';
+  }
+
   Future<void> run() async {
     try {
       _ui = await UiHost.start(
         hotkeyModifiers: config.hotkey.modifiers,
         hotkeyKey: config.hotkey.key,
         hotkeyLabel: config.hotkey.label,
+        languages: [for (final m in _choices) _label(m)],
+        selectedLanguage: _chosenIndex,
       );
     } on UiHostException catch (e) {
       stderr.writeln(e.message);
@@ -373,7 +402,33 @@ class DictationApp {
 
       case UiMenu.quit:
         if (!_quit.isCompleted) _quit.complete();
+
+      default:
+        if (id >= UiMenu.firstLanguage) {
+          await _switchLanguage(id - UiMenu.firstLanguage);
+        }
     }
+  }
+
+  /// Swaps the recogniser without restarting.
+  ///
+  /// The choice is written to the settings file first, so a crash mid-download
+  /// still leaves the app starting in the language the user asked for.
+  Future<void> _switchLanguage(int index) async {
+    if (index < 0 || index >= _choices.length) return;
+    final wanted = _choices[index];
+    if (wanted.id == config.modelId && _stt != null) return;
+
+    config = config.copyWith(modelId: wanted.id);
+    await config.save(configPath);
+    _ui?.setLanguage(index);
+
+    await _dictation?.dispose();
+    _dictation = null;
+    await _stt?.dispose();
+    _stt = null;
+
+    await _load();
   }
 
   /// Applies an edited settings file without restarting.

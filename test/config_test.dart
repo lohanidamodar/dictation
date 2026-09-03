@@ -114,4 +114,45 @@ void main() {
       expect(modelById(config.modelId), isNotNull);
     });
   });
+  group('switching language', () {
+    late Directory dir;
+    setUp(() => dir = Directory.systemTemp.createTempSync('dictation-lang'));
+    tearDown(() => dir.deleteSync(recursive: true));
+
+    test('keeps every other setting', () async {
+      // The tray writes the chosen model straight back to the file, so a
+      // copyWith that dropped the hotkey would silently reset it.
+      final original = parseHotkey('Ctrl+Shift+Space')!;
+      const before = DictationConfig(
+        modelId: 'parakeet-tdt-0.6b-v3-int8',
+        spokenPunctuation: true,
+        showOverlay: false,
+        minimumSeconds: 0.7,
+      );
+      final after = DictationConfig(
+        hotkey: original,
+        modelId: before.modelId,
+        spokenPunctuation: before.spokenPunctuation,
+        showOverlay: before.showOverlay,
+        minimumSeconds: before.minimumSeconds,
+      ).copyWith(modelId: 'indicconformer-ne-int8');
+
+      expect(after.modelId, 'indicconformer-ne-int8');
+      expect(after.hotkey.label, 'Ctrl+Shift+Space');
+      expect(after.spokenPunctuation, isTrue);
+      expect(after.showOverlay, isFalse);
+      expect(after.minimumSeconds, 0.7);
+    });
+
+    test('survives being written and read back', () async {
+      final path = '${dir.path}/config.json';
+      const start = DictationConfig(spokenPunctuation: true);
+      await start.copyWith(modelId: 'indicconformer-ne-int8').save(path);
+
+      final back = await DictationConfig.loadOrCreate(path);
+      expect(back.modelId, 'indicconformer-ne-int8');
+      expect(back.spokenPunctuation, isTrue);
+    });
+  });
+
 }

@@ -15,6 +15,7 @@ import 'package:win32/win32.dart';
 Future<void> main(List<String> argv) async {
   final parser = ArgParser()
     ..addOption('exe', defaultsTo: r'C:\dev\dictate-oss.exe')
+    ..addOption('config', help: 'Settings file, to soak a chosen recogniser.')
     ..addOption('rounds', defaultsTo: '8')
     ..addOption('hold', defaultsTo: '1500', help: 'Hotkey hold, ms.')
     ..addOption('gaps',
@@ -42,7 +43,13 @@ Future<void> main(List<String> argv) async {
   stdout.writeln('starting ${args.option('exe')}');
   final app = await Process.start(
     args.option('exe')!,
-    ['--console', '--yes', '--trace', trace.path],
+    [
+      '--console',
+      '--yes',
+      '--trace',
+      trace.path,
+      if (args.option('config') case final path?) ...['--config', path],
+    ],
   );
   app.stdout.drain<void>();
   app.stderr.transform(const SystemEncoding().decoder).listen(stderr.write);

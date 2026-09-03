@@ -2,7 +2,7 @@ name: dictation
 description: >-
   Hold a hotkey, speak, and the words are typed into whatever window has focus.
   Local speech recognition on Windows, in pure Dart.
-version: 0.1.2
+version: 0.2.0
 publish_to: none
 repository: https://github.com/lohanidamodar/dictation
 

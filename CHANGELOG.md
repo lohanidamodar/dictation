@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0
+
+- **Dictate in Nepali.** IndicConformer joins Parakeet and SenseVoice — the
+  only one of the three that speaks it, and at 134 MB the cheapest to install.
+- **Switch language from the tray**, without editing a file or restarting. The
+  choice is written to the settings file before the model loads, so an
+  interrupted download still leaves the app starting where you asked.
+- An interrupted model download now resumes instead of starting again.
+- `--list-models` shows only recognisers this app can load, with their
+  languages; it was also listing the speaking voices, which belong elsewhere.
+- `tool/try_model.dart` transcribes a .wav with any catalogue model, so a
+  recogniser can be checked without a microphone.
+
 ## 0.1.2
 
 - The icon was 364 KB of uncompressed bitmaps; as PNG above 64px it is 23 KB,

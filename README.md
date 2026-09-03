@@ -81,6 +81,22 @@ If you redistribute a build with weights included, those obligations are yours,
 not this project's. `THIRD-PARTY-NOTICES.md`, which ships in every download,
 lists everything a release redistributes and under what terms.
 
+### Switching language
+
+Right-click the tray icon and pick one. The list shows every recogniser with
+its language and, for one not yet downloaded, its size — choosing it fetches it
+after showing the licence, then swaps the engine without a restart.
+
+| language | recogniser | size |
+|---|---|---|
+| English | Parakeet TDT 0.6b v3 | 639 MB |
+| Nepali | IndicConformer | 134 MB |
+| English, Chinese, Japanese, Korean, Cantonese | SenseVoice Small | 228 MB |
+
+Nepali is the only one of the three that speaks it: Parakeet is European
+languages, SenseVoice is East Asian, and none of audio.cpp's recognisers covers
+Nepali either.
+
 ### Which recogniser
 
 Parakeet by default. It punctuates and capitalises as it decodes, which is most
